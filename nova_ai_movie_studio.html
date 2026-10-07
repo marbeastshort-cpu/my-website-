@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nova AI Movie Studio</title>
+<style>
+:root{--bg:#08111f;--panel:#0f1b2d;--panel2:#13243a;--text:#edf5ff;--muted:#91a4bd;--line:#243852;--accent:#66d9ff;--accent2:#8d7cff;--good:#52e0a1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,#17335a 0,#08111f 42%);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+.wrap{max-width:1200px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:18px}.brand{font-size:24px;font-weight:800}.brand span{color:var(--accent)}.badge{border:1px solid #31516e;padding:7px 11px;border-radius:999px;color:var(--good);font-size:12px}
+.grid{display:grid;grid-template-columns:1.35fr .85fr;gap:16px}.card{background:linear-gradient(180deg,#102038,#0d1828);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 35px #0004;margin-bottom:16px}.card h2{font-size:16px;margin:0 0 14px}.label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}
+textarea,input,select{width:100%;background:#091525;border:1px solid #29405b;border-radius:11px;color:var(--text);padding:11px;font:inherit;outline:none}textarea{min-height:115px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{grid-template-columns:1fr 1fr 1fr}.checks{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0}.checks label{font-size:13px;color:#c8d5e5}.checks input{width:auto}
+button{border:0;border-radius:11px;padding:11px 15px;font-weight:700;cursor:pointer;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#06101c}.ghost{background:#172940;color:#dbe9f8;border:1px solid #2c4662}.buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.status{font-size:12px;color:var(--muted);margin-top:9px}.status b{color:#ffd27a}.clip{padding:12px;border:1px solid #29405b;border-radius:12px;margin-top:9px;background:#0a1626}.clip strong{display:block}.clip small{color:var(--muted)}.timeline{display:flex;gap:7px;overflow:auto;padding-bottom:4px}.seg{min-width:82px;height:48px;border-radius:9px;background:#18304a;border:1px solid #31506d;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bcd0e5}
+pre{white-space:pre-wrap;background:#07111e;border:1px solid #263d56;border-radius:11px;padding:12px;min-height:130px;overflow:auto;font-size:12px;color:#bfe6ff}.small{font-size:11px;color:var(--muted);line-height:1.5}.api{border-left:3px solid #ffd27a;padding-left:10px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.row,.three{grid-template-columns:1fr}.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">NOVA <span>AI MOVIE STUDIO</span></div><div class="badge">● DEMO MODE — API READY</div></div>
+
+  <div class="grid">
+    <main>
+      <section class="card">
+        <h2>🎬 AI Video Generator</h2>
+        <label class="label">Scene prompt</label>
+        <textarea id="prompt" placeholder="Example: Elias walks through a snowy mountain forest at night. He hears a strange sound and raises his lantern. Cinematic fantasy, realistic movement."></textarea>
+        <div class="row">
+          <div><label class="label">Duration</label><select id="duration"><option>6 seconds</option></select></div>
+          <div><label class="label">Aspect ratio</label><select><option>16:9</option><option>9:16</option><option>1:1</option></select></div>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="lock" checked> Character Lock</label>
+          <label><input type="checkbox" checked> Cinematic consistency</label>
+          <label><input type="checkbox" checked> No text / watermark</label>
+        </div>
+        <label class="label">Reference image or video</label><input type="file" id="ref" accept="image/*,video/*">
+        <div class="buttons"><button onclick="generateClip()">Generate 6-sec Clip</button><button class="ghost" onclick="copyPrompt()">Copy Prompt</button></div>
+        <div id="vstatus" class="status">Demo mode: the button creates a project clip entry; connect a video API for real rendering.</div>
+      </section>
+
+      <section class="card">
+        <h2>🎙️ Voice / TTS Generator</h2>
+        <label class="label">Dialogue / narration</label>
+        <textarea id="voiceText" placeholder="Elias: Who are you?&#10;Dragon: I have been waiting for you."></textarea>
+        <div class="row">
+          <div><label class="label">Voice</label><select id="voice"><option>Natural Male</option><option>Natural Female</option><option>Deep Cinematic</option><option>Custom Voice (API)</option></select></div>
+          <div><label class="label">Language</label><select><option>English</option><option>Urdu</option><option>Hindi</option><option>Arabic</option></select></div>
+        </div>
+        <div class="buttons"><button onclick="generateVoice()">Generate Voice</button><button class="ghost" onclick="attachVoice()">Attach to Selected Clip</button></div>
+        <div id="tstatus" class="status">Demo mode: TTS API required for an actual audio file.</div>
+      </section>
+
+      <section class="card">
+        <h2>🧬 Character Lock</h2>
+        <div class="row">
+          <div><label class="label">Character</label><input id="charName" value="Elias"></div>
+          <div><label class="label">Reference ID</label><input id="charId" value="ELIAS-001"></div>
+        </div>
+        <label class="label">Locked appearance</label>
+        <textarea id="charDesc">17-year-old boy, messy dark-brown hair, brown eyes, black leather tunic, dark trousers, brown boots, small scar on left cheek. Keep face, clothes and proportions identical in every clip.</textarea>
+        <div class="buttons"><button class="ghost" onclick="saveCharacter()">Save Character Lock</button></div>
+      </section>
+
+      <section class="card">
+        <h2>🎞️ Movie Timeline</h2>
+        <div class="timeline" id="timeline"><div class="seg">Clip 01</div><div class="seg">Clip 02</div><div class="seg">Clip 03</div></div>
+        <div class="buttons"><button class="ghost" onclick="addTimeline()">+ Add Clip</button><button class="ghost" onclick="exportProject()">Export Project JSON</button></div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="card">
+        <h2>🗂️ Clip Gallery</h2>
+        <div id="clips"><div class="clip"><strong>No rendered clips yet</strong><small>Generate a demo clip to add it here.</small></div></div>
+      </section>
+
+      <section class="card">
+        <h2>🤖 AI Coding Assistant</h2>
+        <label class="label">What should the assistant build?</label>
+        <textarea id="codePrompt" placeholder="Example: Add a download button for the generated clip."></textarea>
+        <div class="buttons"><button onclick="makeCode()">Generate Code</button></div>
+        <pre id="codeOut">// Your generated code will appear here.</pre>
+        <button class="ghost" onclick="copyCode()">Copy Code</button>
+      </section>
+
+      <section class="card">
+        <h2>⚙️ API Settings</h2>
+        <div class="api small">For security, do not put secret API keys directly into a public HTML file. Use a secure server/proxy when connecting real video and TTS APIs.</div>
+        <label class="label">Video API endpoint</label><input placeholder="https://your-server.example/api/video">
+        <label class="label">TTS API endpoint</label><input placeholder="https://your-server.example/api/tts">
+        <label class="label">Video model</label><input placeholder="your-video-model">
+        <div class="status">These fields are placeholders in this demo.</div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+let clipNo=3, selectedClip=null, voiceReady=false;
+function generateClip(){
+  const p=document.getElementById('prompt').value.trim()||'Untitled cinematic scene';
+  clipNo++; selectedClip=clipNo;
+  document.getElementById('clips').insertAdjacentHTML('afterbegin',`<div class="clip"><strong>Clip ${String(clipNo).padStart(2,'0')} — 6 sec</strong><small>${escapeHtml(p.slice(0,130))}</small><div class="status">Demo render • Character Lock ON</div></div>`);
+  document.getElementById('timeline').insertAdjacentHTML('beforeend',`<div class="seg">Clip ${String(clipNo).padStart(2,'0')}</div>`);
+  document.getElementById('vstatus').innerHTML='<b>Demo clip created.</b> Connect a real video API to render the actual 6-second video.';
+}
+function generateVoice(){voiceReady=true;document.getElementById('tstatus').innerHTML='<b>Voice draft created.</b> Connect a TTS API to produce the actual audio file.'}
+function attachVoice(){document.getElementById('tstatus').innerHTML=voiceReady?'<b>Voice attached to selected clip in the demo project.</b>':'Generate the voice first.'}
+function saveCharacter(){document.getElementById('vstatus').innerHTML='<b>Character Lock saved.</b> New clips will use the locked character description in this demo.'}
+function addTimeline(){clipNo++;document.getElementById('timeline').insertAdjacentHTML('beforeend',`<div class="seg">Clip ${String(clipNo).padStart(2,'0')}</div>`)}
+function copyPrompt(){navigator.clipboard?.writeText(document.getElementById('prompt').value||'');}
+function copyCode(){navigator.clipboard?.writeText(document.getElementById('codeOut').innerText||'');}
+function makeCode(){const p=document.getElementById('codePrompt').value||'Add a feature';document.getElementById('codeOut').textContent=`// AI Coding Assistant demo\\n// Request: ${p}\\n\\nfunction newFeature(){\\n  console.log("Implement: ${p.replace(/"/g,'\\\\\"')}");\\n}`;}
+function exportProject(){const data={app:'Nova AI Movie Studio',duration:'6 seconds',character:{name:document.getElementById('charName').value,id:document.getElementById('charId').value,description:document.getElementById('charDesc').value},voice:document.getElementById('voiceText').value};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='nova-movie-project.json';a.click();}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+</script>
+</body></html>
